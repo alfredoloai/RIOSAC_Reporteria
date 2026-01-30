@@ -1,0 +1,15 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Datos (descargas / outputs)
+data/raw/
+data/output/
+
+# Secrets
+.env
+
+# IDE
+.vscode/
+.idea/
