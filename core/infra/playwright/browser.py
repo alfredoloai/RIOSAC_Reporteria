@@ -32,7 +32,7 @@ def create_session(
         slow_mo=slow_mo_ms,
         args=launch_args,
     )
-    context = browser.new_context()
+    context = browser.new_context(accept_downloads=True)
     page = context.new_page()
     page.set_default_timeout(timeout_ms)
     page.set_default_navigation_timeout(timeout_ms)
