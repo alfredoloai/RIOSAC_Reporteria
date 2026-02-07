@@ -12,6 +12,7 @@ from core.config.logging_config import setup_logging
 from core.infra.playwright.browser import create_session
 from core.infra.playwright.eta_client import EtaClient, EtaCredentials
 from core.storage.filesystem import build_raw_target
+from core.utils.dates import iter_dates
 
 
 @dataclass(frozen=True)
@@ -20,11 +21,18 @@ class ExportResult:
 	saved_to: Path
 
 
-def export_capa_a_raw(groups: Iterable[str], export_date: date | None = None) -> list[ExportResult]:
+def export_capa_a_raw(
+	groups: Iterable[str],
+	start_date: date | None = None,
+	end_date: date | None = None,
+) -> list[ExportResult]:
 	settings = load_settings()
 	logger = setup_logging(settings.paths.log_dir, app_env=settings.app_env)
 
-	d = export_date or date.today()
+	start = start_date or date.today()
+	end = end_date or start
+	if end < start:
+		raise ValueError("end_date no puede ser anterior a start_date")
 
 	creds = EtaCredentials(username=settings.eta_username, password=settings.eta_password)
 
@@ -45,18 +53,32 @@ def export_capa_a_raw(groups: Iterable[str], export_date: date | None = None) ->
 			client.assert_logged_in()
 			logger.info("Login OK")
 
-			for g in groups:
-				logger.info("Seleccionando cuadrilla: %s", g)
-				client.select_group(g)
+			for current_day in iter_dates(start, end):
+				logger.info("Configurando fecha de despacho: %s", current_day.isoformat())
+				client.set_dispatch_date(current_day)
+				client.page.wait_for_timeout(500)
+				client.page.wait_for_load_state("networkidle")
 
-				logger.info("Exportando CSV: %s", g)
-				download = client.export_csv_from_actions()
+				for g in groups:
+					try:
+						logger.info("Seleccionando cuadrilla: %s", g)
+						client.select_group(g)
 
-				target = build_raw_target(settings.paths.raw_dir, d, g)
-				download.save_as(str(target.file_path))
+						logger.info("Exportando CSV: %s", g)
+						download = client.export_csv_from_actions()
 
-				logger.info("CSV guardado: %s", target.file_path)
-				results.append(ExportResult(group_name=g, saved_to=target.file_path))
+						target = build_raw_target(settings.paths.raw_dir, current_day, g)
+						download.save_as(str(target.file_path))
+
+						logger.info("CSV guardado: %s", target.file_path)
+						results.append(ExportResult(group_name=g, saved_to=target.file_path))
+					except Exception:
+						logger.exception(
+							"Falló export en grupo=%s día=%s. Se continúa.",
+							g,
+							current_day.isoformat(),
+						)
+						continue
 
 			return results
 
