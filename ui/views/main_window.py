@@ -8,10 +8,7 @@ import customtkinter as ctk
 
 from ui.controllers.actions import (
 	CommandRunner,
-	build_master_cmd,
-	export_raw_cmd,
-	queue_ids_cmd,
-	run_clean_cmd,
+	full_pipeline_cmd,
 )
 
 
@@ -48,14 +45,8 @@ class MainWindow(ctk.CTk):
 		btns = ctk.CTkFrame(self)
 		btns.pack(fill="x", padx=12, pady=(0, 12))
 
-		self.btn_export = ctk.CTkButton(btns, text="1) Export RAW (Capa A)", command=self.on_export_raw)
-		self.btn_export.pack(side="left", padx=8, pady=10)
-
-		self.btn_clean = ctk.CTkButton(btns, text="2) Clean (Capa B)", command=self.on_clean)
-		self.btn_clean.pack(side="left", padx=8, pady=10)
-
-		self.btn_master = ctk.CTkButton(btns, text="3) Build Masters (Capa B)", command=self.on_master)
-		self.btn_master.pack(side="left", padx=8, pady=10)
+		self.btn_pipeline = ctk.CTkButton(btns, text="Iniciar (A→D)", command=self.on_pipeline)
+		self.btn_pipeline.pack(side="left", padx=8, pady=10)
 
 		self.btn_open_data = ctk.CTkButton(btns, text="Abrir /data", command=self.open_data_folder)
 		self.btn_open_data.pack(side="right", padx=8, pady=10)
@@ -63,21 +54,15 @@ class MainWindow(ctk.CTk):
 		self.btn_open_logs = ctk.CTkButton(btns, text="Abrir /logs", command=self.open_logs_folder)
 		self.btn_open_logs.pack(side="right", padx=8, pady=10)
 
-		self.btn_queue = ctk.CTkButton(btns, text="4) Queue IDs (Capa C)", command=self.on_queue_ids)
-		self.btn_queue.pack(side="left", padx=8, pady=10)
-
 		self.output = ctk.CTkTextbox(self, wrap="none")
 		self.output.pack(fill="both", expand=True, padx=12, pady=(0, 12))
-		self._write("Listo. Flujo recomendado: Export RAW -> Clean -> Build Masters\n\n")
+		self._write("Listo. Pulsa 'Iniciar (A→D)' para correr el pipeline completo.\n\n")
 
 	def _set_buttons_enabled(self, enabled: bool) -> None:
 		state = "normal" if enabled else "disabled"
-		self.btn_export.configure(state=state)
-		self.btn_clean.configure(state=state)
-		self.btn_master.configure(state=state)
+		self.btn_pipeline.configure(state=state)
 		self.btn_open_data.configure(state=state)
 		self.btn_open_logs.configure(state=state)
-		self.btn_queue.configure(state=state)
 
 	def _write(self, text: str) -> None:
 		self.output.insert("end", text)
@@ -98,7 +83,7 @@ class MainWindow(ctk.CTk):
 
 		self.runner.run(args, on_line=on_line, on_done=on_done)
 
-	def on_export_raw(self) -> None:
+	def on_pipeline(self) -> None:
 		try:
 			start = _parse_date(self.start_entry.get())
 			end = _parse_date(self.end_entry.get())
@@ -108,23 +93,7 @@ class MainWindow(ctk.CTk):
 			self._write(f"[ERROR] Fechas inválidas: {exc}\n\n")
 			return
 
-		self._run_cmd(export_raw_cmd(start, end))
-
-	def on_clean(self) -> None:
-		self._run_cmd(run_clean_cmd())
-
-	def on_master(self) -> None:
-		self._run_cmd(build_master_cmd())
-
-	def on_queue_ids(self) -> None:
-		try:
-			end = _parse_date(self.end_entry.get())
-		except Exception as exc:
-			self._write(f"[ERROR] Fecha End inválida: {exc}\n\n")
-			return
-
-		month = end.strftime("%Y-%m")
-		self._run_cmd(queue_ids_cmd(month))
+		self._run_cmd(full_pipeline_cmd(start, end))
 
 	def open_data_folder(self) -> None:
 		path = self.project_root / "data"

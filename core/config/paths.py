@@ -15,6 +15,7 @@ class ProjectPaths:
     clean_dir: Path
     daily_dir: Path
     masters_dir: Path
+    manifests_dir: Path
 
     daily_capa_a: Path
     daily_capa_b: Path
@@ -35,6 +36,7 @@ def build_paths(project_data_dir: str, project_log_dir: str) -> ProjectPaths:
     clean_dir = data_dir / "clean"
     daily_dir = data_dir / "daily"
     masters_dir = data_dir / "masters"
+    manifests_dir = data_dir / "manifests"
 
     daily_capa_a = daily_dir / "capa_a"
     daily_capa_b = daily_dir / "capa_b"
@@ -52,6 +54,7 @@ def build_paths(project_data_dir: str, project_log_dir: str) -> ProjectPaths:
         clean_dir,
         daily_dir,
         masters_dir,
+        manifests_dir,
         daily_capa_a,
         daily_capa_b,
         daily_capa_c,
@@ -69,6 +72,7 @@ def build_paths(project_data_dir: str, project_log_dir: str) -> ProjectPaths:
         clean_dir=clean_dir,
         daily_dir=daily_dir,
         masters_dir=masters_dir,
+        manifests_dir=manifests_dir,
         daily_capa_a=daily_capa_a,
         daily_capa_b=daily_capa_b,
         daily_capa_c=daily_capa_c,

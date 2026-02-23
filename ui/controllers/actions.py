@@ -71,23 +71,8 @@ def py_cmd(module: str, extra: Optional[list[str]] = None) -> list[str]:
 	return [sys.executable, "-m", module, *extra]
 
 
-def export_raw_cmd(start: date, end: date) -> list[str]:
+def full_pipeline_cmd(start: date, end: date) -> list[str]:
 	return py_cmd(
-		"core.layers.capa_a.run_export_raw",
+		"core.pipeline.full_run",
 		["--start", start.isoformat(), "--end", end.isoformat()],
 	)
-
-
-def run_clean_cmd() -> list[str]:
-	return py_cmd("core.layers.capa_b.run_clean")
-
-
-def build_master_cmd() -> list[str]:
-	return py_cmd("core.layers.capa_b.run_build_master")
-
-
-def queue_ids_cmd(month: str, *, overwrite: bool = True) -> list[str]:
-	extra = ["--month", month]
-	if overwrite:
-		extra.append("--overwrite")
-	return py_cmd("core.layers.capa_c.run_generate_queue", extra)
